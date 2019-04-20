@@ -175,13 +175,11 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.setState({ editingNote: Notes.createEmptyNote() });
 
     const notesRef = firebase.firestore().collection('redux-todo-notes');
-    const done = this.workManager.start('add note');
     if (note.id) {
-      await notesRef.doc(note.id).set(note);
+      this.workManager.run('update note', () => notesRef.doc(note.id).set(note));
     } else {
-      await notesRef.add(note);
+      this.workManager.run('add note', () => notesRef.add(note));
     }
-    done();
   }
 
   public onNewNoteCancel (note: Notes.INote) {
@@ -196,9 +194,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
     const ok = window.confirm('Are you sure you want to delete this?');
     if (ok) {
       const notesRef = firebase.firestore().collection('redux-todo-notes');
-      const done = this.workManager.start('delete note');
-      await notesRef.doc(note.id).delete();
-      done();
+      this.workManager.run('delete note', () => notesRef.doc(note.id).delete());
     }
   }
 

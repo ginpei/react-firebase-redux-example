@@ -12,11 +12,11 @@ export default class WorkManager {
 
   public async run<T> (
     title: string,
-    fn: () => Promise<T>,
+    promise: Promise<T>,
   ): Promise<T | null> {
     const done = this.start(title);
     try {
-      const result = await fn();
+      const result = await promise;
       return result;
     } catch (error) {
       this.onError(error);

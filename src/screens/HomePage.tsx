@@ -152,14 +152,12 @@ export class HomePage extends React.Component<any, IHomePageState> {
   public async onLogInClick () {
     const email = 'test@google.com';
     const password = '123456';
-    this.workManager.run('log in', () => {
-      const p = firebase.auth().signInWithEmailAndPassword(email, password);
-      return p;
-    });
+    const p = firebase.auth().signInWithEmailAndPassword(email, password);
+    this.workManager.run('log in', p);
   }
 
   public async onLogOutClick () {
-    this.workManager.run('log out', () => firebase.auth().signOut());
+    this.workManager.run('log out', firebase.auth().signOut());
   }
 
   public onNewNoteChange (note: Notes.INote) {
@@ -176,9 +174,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
 
     const notesRef = firebase.firestore().collection('redux-todo-notes');
     if (note.id) {
-      this.workManager.run('update note', () => notesRef.doc(note.id).set(note));
+      this.workManager.run('update note', notesRef.doc(note.id).set(note));
     } else {
-      this.workManager.run('add note', () => notesRef.add(note));
+      this.workManager.run('add note', notesRef.add(note));
     }
   }
 
@@ -194,7 +192,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
     const ok = window.confirm('Are you sure you want to delete this?');
     if (ok) {
       const notesRef = firebase.firestore().collection('redux-todo-notes');
-      this.workManager.run('delete note', () => notesRef.doc(note.id).delete());
+      this.workManager.run('delete note', notesRef.doc(note.id).delete());
     }
   }
 

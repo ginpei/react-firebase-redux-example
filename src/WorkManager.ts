@@ -27,13 +27,15 @@ export default class WorkManager {
   }
 
   public start (title: string) {
-    const newTasks = [...this.workingTasks];
     const task: IWorkingTask = {
       date: Date.now(),
       title,
     };
+
+    const newTasks = [...this.workingTasks];
     newTasks.push(task);
     this.workingTasks = newTasks;
+
     this.onWork(true);
 
     return () => {
@@ -47,8 +49,8 @@ export default class WorkManager {
 
       const finalTasks = [...workingTasks];
       finalTasks.splice(index, 1);
-
       this.workingTasks = finalTasks;
+
       const working = finalTasks.length > 0;
       this.onWork(working);
     };

@@ -149,14 +149,14 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.unsubscribeNotes();
   }
 
-  public async onLogInClick () {
+  public onLogInClick () {
     const email = 'test@google.com';
     const password = '123456';
     const p = firebase.auth().signInWithEmailAndPassword(email, password);
     this.workManager.run('log in', p);
   }
 
-  public async onLogOutClick () {
+  public onLogOutClick () {
     this.workManager.run('log out', firebase.auth().signOut());
   }
 

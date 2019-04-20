@@ -56,6 +56,8 @@ export class HomePage extends React.Component<any, IHomePageState> {
 
   constructor (props: any) {
     super(props);
+    this.onLogInClick = this.onLogInClick.bind(this);
+    this.onLogOutClick = this.onLogOutClick.bind(this);
     this.onNewNoteChange = this.onNewNoteChange.bind(this);
     this.onNewNoteSubmit = this.onNewNoteSubmit.bind(this);
     this.onNoteEdit = this.onNoteEdit.bind(this);
@@ -100,7 +102,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
           <>
             <p>Welcome {this.state.currentUser.name}!</p>
             <p>
-              <button disabled>Log out</button>
+              <button
+                onClick={this.onLogOutClick}
+              >Log out</button>
             </p>
             <h2>New note</h2>
             <NoteForm
@@ -120,7 +124,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
           </>
         ) : (
           <p>
-            <button disabled>Log in</button>
+            <button
+              onClick={this.onLogInClick}
+            >Log in</button>
           </p>
         )}
       </div>
@@ -134,6 +140,19 @@ export class HomePage extends React.Component<any, IHomePageState> {
   public componentWillUnmount () {
     this.unsubscribeAuth();
     this.unsubscribeNotes();
+  }
+
+  public async onLogInClick () {
+    const email = 'test@google.com';
+    const password = '123456';
+    this.work('log in', () => {
+      const p = firebase.auth().signInWithEmailAndPassword(email, password);
+      return p;
+    });
+  }
+
+  public async onLogOutClick () {
+    this.work('log out', () => firebase.auth().signOut());
   }
 
   public onNewNoteChange (note: Notes.INote) {
@@ -230,11 +249,24 @@ export class HomePage extends React.Component<any, IHomePageState> {
   }
 
   private addError (error: Error) {
-    console.error('notes ref', error);
+    console.error(error);
 
     const errors = [...this.state.errors];
     errors.push(error.message);
     this.setState({ errors });
+  }
+
+  private async work<T> (title: string, fn: () => Promise<T>): Promise<T | null> {
+    const done = this.setWorking(title);
+    try {
+      const result = await fn();
+      return result;
+    } catch (error) {
+      this.addError(error);
+      return null;
+    } finally {
+      done();
+    }
   }
 
   private setWorking (title = '') {

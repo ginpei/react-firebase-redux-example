@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { NoteForm } from '../independents/NoteForm';
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
+import * as Errors from '../models/Errors';
 import * as Notes from '../models/Notes';
 import { AppDispatch, IAppState } from '../models/store';
 import WorkManager from '../WorkManager';
@@ -38,8 +39,9 @@ function Note (props: INoteProps) {
 }
 
 interface IHomePageProps {
-  dispatch: AppDispatch;
-  foo: string;
+  addError: (error: Errors.AnyError) => void;
+  clearError: () => void;
+  errors: Errors.IErrorLog[];
 }
 
 interface IHomePageState {
@@ -50,7 +52,6 @@ interface IHomePageState {
     ready: boolean;
   };
   editingNote: Notes.INote;
-  errors: string[];
   userNotes: Notes.INote[];
   working: boolean;
 }
@@ -63,6 +64,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   constructor (props: any) {
     super(props);
     this.onFooClick = this.onFooClick.bind(this);
+    this.onClearErrorClick = this.onClearErrorClick.bind(this);
     this.onLogInClick = this.onLogInClick.bind(this);
     this.onLogOutClick = this.onLogOutClick.bind(this);
     this.onNewNoteChange = this.onNewNoteChange.bind(this);
@@ -78,13 +80,12 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
         ready: false,
       },
       editingNote: Notes.createEmptyNote(),
-      errors: [],
       userNotes: [],
       working: false,
     };
 
     this.workManager.onWork = (working) => this.setState({ working });
-    this.workManager.onError = (error) => this.addError(error);
+    this.workManager.onError = (error) => this.props.addError(error);
   }
 
   public render () {
@@ -98,7 +99,6 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
       <div>
         <h1>
           Home
-          [{this.props.foo}]
           {this.state.working && '!'}
         </h1>
         <p>
@@ -108,11 +108,18 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
             Foo
           </button>
         </p>
-        {this.state.errors.length > 0 && (
+        {this.props.errors.length > 0 && (
           <div>
-            {this.state.errors.map((message) => (
-              <p key={message}>{message}</p>
-            ))}
+            <button
+              onClick={this.onClearErrorClick}
+            >
+              Clear
+            </button>
+            <ul>
+              {this.props.errors.map(({ error, occurredAt }) => (
+                <li key={occurredAt}>{error.message}</li>
+              ))}
+            </ul>
           </div>
         )}
         <h2>User</h2>
@@ -166,11 +173,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   }
 
   public onFooClick () {
-    if (this.props.foo === 'bar') {
-      this.props.dispatch({ type: 'FOO_BOO' });
-    } else {
-      this.props.dispatch({ type: 'FOO_BAR' });
-    }
+    this.props.addError(new Error('This is a dummy error'));
+  }
+
+  public onClearErrorClick () {
+    this.props.clearError();
   }
 
   public onLogInClick () {
@@ -224,7 +231,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     const done = this.workManager.start('init auth');
     const unsubscribeAuth = firebase.auth().onAuthStateChanged(
       (user) => this.onAuth(user),
-      (error) => this.addError(error),
+      (error) => this.props.addError(error),
       () => done(),
     );
     return unsubscribeAuth;
@@ -264,7 +271,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
       .where('userId', '==', this.state.currentUser.id);
     const done = this.workManager.start('init notes ref');
     const unsubscribeNotes = notesRef.onSnapshot({
-      error: (error) => this.addError(error),
+      error: (error) => this.props.addError(error),
       next: (snapshot) => {
         done();
         const notes = snapshot.docs.map((v) => Notes.snapshotToRecord(v));
@@ -273,18 +280,14 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     });
     return unsubscribeNotes;
   }
-
-  private addError (error: Error | firebase.auth.Error) {
-    console.error(error);
-
-    const errors = [...this.state.errors];
-    errors.push(error.message);
-    this.setState({ errors });
-  }
 }
 
 export default connect(
   (state: IAppState) => ({
-    foo: state.foo,
+    errors: state.errors,
+  }),
+  (dispatch: AppDispatch) => ({
+    addError: (error: Errors.AnyError) => dispatch(Errors.add(error)),
+    clearError: () => dispatch(Errors.clear()),
   }),
 )(HomePage);

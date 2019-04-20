@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { NoteForm } from '../independents/NoteForm';
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
+import * as CurrentUser from '../models/CurrentUser';
 import * as Errors from '../models/Errors';
 import * as Notes from '../models/Notes';
 import { AppDispatch, IAppState } from '../models/store';
@@ -41,16 +42,12 @@ function Note (props: INoteProps) {
 interface IHomePageProps {
   addError: (error: Errors.AnyError) => void;
   clearError: () => void;
+  currentUser: CurrentUser.ICurrentUserState;
   errors: Errors.IErrorLog[];
+  setCurrentUser: (user: firebase.User | null) => void;
 }
 
 interface IHomePageState {
-  currentUser: {
-    id: string;
-    loggedIn: boolean;
-    name: string;
-    ready: boolean;
-  };
   editingNote: Notes.INote;
   userNotes: Notes.INote[];
   working: boolean;
@@ -73,12 +70,6 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     this.onNoteEdit = this.onNoteEdit.bind(this);
     this.onNoteDelete = this.onNoteDelete.bind(this);
     this.state = {
-      currentUser: {
-        id: '',
-        loggedIn: false,
-        name: '',
-        ready: false,
-      },
       editingNote: Notes.createEmptyNote(),
       userNotes: [],
       working: false,
@@ -89,7 +80,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   }
 
   public render () {
-    if (!this.state.currentUser.ready) {
+    if (!this.props.currentUser.ready) {
       return (
         <div>…</div>
       );
@@ -123,9 +114,9 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
           </div>
         )}
         <h2>User</h2>
-        {this.state.currentUser.loggedIn ? (
+        {this.props.currentUser.loggedIn ? (
           <>
-            <p>Welcome {this.state.currentUser.name}!</p>
+            <p>Welcome {this.props.currentUser.name}!</p>
             <p>
               <button
                 onClick={this.onLogOutClick}
@@ -196,10 +187,10 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   }
 
   public onNewNoteSubmit (note: Notes.INote) {
-    if (!this.state.currentUser.loggedIn) {
+    if (!this.props.currentUser.loggedIn) {
       throw new Error('User must log in, in order to submit note');
     }
-    note.userId = this.state.currentUser.id;
+    note.userId = this.props.currentUser.id;
 
     this.setState({ editingNote: Notes.createEmptyNote() });
 
@@ -238,37 +229,18 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   }
 
   private onAuth (user: firebase.User | null) {
-    if (user) {
-      this.setState({
-        currentUser: {
-          id: user.uid,
-          loggedIn: true,
-          name: user.displayName || '',
-          ready: true,
-        },
-      });
-    } else {
-      this.setState({
-        currentUser: {
-          id: '',
-          loggedIn: false,
-          name: '',
-          ready: true,
-        },
-      });
-    }
-
+    this.props.setCurrentUser(user);
     this.unsubscribeNotes();
     this.unsubscribeNotes = this.connectUserNotes();
   }
 
   private connectUserNotes () {
-    if (!this.state.currentUser.loggedIn) {
+    if (!this.props.currentUser.loggedIn) {
       return noop;
     }
 
     const notesRef = firebase.firestore().collection('redux-todo-notes')
-      .where('userId', '==', this.state.currentUser.id);
+      .where('userId', '==', this.props.currentUser.id);
     const done = this.workManager.start('init notes ref');
     const unsubscribeNotes = notesRef.onSnapshot(
       (snapshot) => this.setState({
@@ -283,10 +255,12 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
 
 export default connect(
   (state: IAppState) => ({
+    currentUser: state.currentUser,
     errors: state.errors,
   }),
   (dispatch: AppDispatch) => ({
     addError: (error: Errors.AnyError) => dispatch(Errors.add(error)),
     clearError: () => dispatch(Errors.clear()),
+    setCurrentUser: (user: firebase.User | null) => dispatch(CurrentUser.set(user)),
   }),
 )(HomePage);

@@ -22,10 +22,14 @@ function Note (props: INoteProps) {
       <p>
         <button
           onClick={onEdit}
-        >Edit</button>
+        >
+          Edit
+        </button>
         <button
           onClick={onDelete}
-        >Delete</button>
+        >
+          Delete
+        </button>
       </p>
     </div>
   );
@@ -93,7 +97,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
         {this.state.errors.length > 0 && (
           <div>
             {this.state.errors.map((message) => (
-              <p>{message}</p>
+              <p key={message}>{message}</p>
             ))}
           </div>
         )}
@@ -104,7 +108,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
             <p>
               <button
                 onClick={this.onLogOutClick}
-              >Log out</button>
+              >
+                Log out
+              </button>
             </p>
             <h2>New note</h2>
             <NoteForm
@@ -126,7 +132,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
           <p>
             <button
               onClick={this.onLogInClick}
-            >Log in</button>
+            >
+              Log in
+            </button>
           </p>
         )}
       </div>

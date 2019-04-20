@@ -166,7 +166,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.setState({ editingNote: note });
   }
 
-  public async onNewNoteSubmit (note: Notes.INote) {
+  public onNewNoteSubmit (note: Notes.INote) {
     if (!this.state.currentUser.loggedIn) {
       throw new Error('User must log in, in order to submit note');
     }
@@ -186,11 +186,11 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.setState({ editingNote: Notes.createEmptyNote() });
   }
 
-  public async onNoteEdit (note: Notes.INote) {
+  public onNoteEdit (note: Notes.INote) {
     this.setState({ editingNote: { ...note } });
   }
 
-  public async onNoteDelete (note: Notes.INote) {
+  public onNoteDelete (note: Notes.INote) {
     const ok = window.confirm('Are you sure you want to delete this?');
     if (ok) {
       const notesRef = firebase.firestore().collection('redux-todo-notes');

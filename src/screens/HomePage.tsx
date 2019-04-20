@@ -102,34 +102,33 @@ export class HomePage extends React.Component<any, IHomePageState> {
             <p>
               <button disabled>Log out</button>
             </p>
+            <h2>New note</h2>
+            <NoteForm
+              note={this.state.editingNote}
+              onChange={this.onNewNoteChange}
+              onSubmit={this.onNewNoteSubmit}
+            />
+            <h2>Notes</h2>
+            {this.state.userNotes.map((note) => (
+              <Note
+                key={note.id}
+                note={note}
+                onDelete={this.onNoteDelete}
+                onEdit={this.onNoteEdit}
+              />
+            ))}
           </>
         ) : (
           <p>
             <button disabled>Log in</button>
           </p>
         )}
-        <h2>New note</h2>
-        <NoteForm
-          note={this.state.editingNote}
-          onChange={this.onNewNoteChange}
-          onSubmit={this.onNewNoteSubmit}
-        />
-        <h2>Notes</h2>
-        {this.state.userNotes.map((note) => (
-          <Note
-            key={note.id}
-            note={note}
-            onDelete={this.onNoteDelete}
-            onEdit={this.onNoteEdit}
-          />
-        ))}
       </div>
     );
   }
 
   public componentDidMount () {
     this.unsubscribeAuth = this.connectAuth();
-    this.unsubscribeNotes = this.connectUserNotes();
   }
 
   public componentWillUnmount () {
@@ -142,6 +141,11 @@ export class HomePage extends React.Component<any, IHomePageState> {
   }
 
   public async onNewNoteSubmit (note: Notes.INote) {
+    if (!this.state.currentUser.loggedIn) {
+      throw new Error('User must log in, in order to submit note');
+    }
+    note.userId = this.state.currentUser.id;
+
     this.setState({ editingNote: Notes.createEmptyNote() });
 
     const notesRef = firebase.firestore().collection('redux-todo-notes');
@@ -175,32 +179,44 @@ export class HomePage extends React.Component<any, IHomePageState> {
       error: (error) => this.addError(error),
       next: (user: firebase.User | null) => {
         done();
-        if (user) {
-          this.setState({
-            currentUser: {
-              id: user.uid,
-              loggedIn: true,
-              name: user.displayName || '',
-              ready: true,
-            },
-          });
-        } else {
-          this.setState({
-            currentUser: {
-              id: '',
-              loggedIn: false,
-              name: '',
-              ready: true,
-            },
-          });
-        }
+        this.onAuth(user);
       },
     });
     return unsubscribeAuth;
   }
 
+  private onAuth (user: firebase.User | null) {
+    if (user) {
+      this.setState({
+        currentUser: {
+          id: user.uid,
+          loggedIn: true,
+          name: user.displayName || '',
+          ready: true,
+        },
+      });
+    } else {
+      this.setState({
+        currentUser: {
+          id: '',
+          loggedIn: false,
+          name: '',
+          ready: true,
+        },
+      });
+    }
+
+    this.unsubscribeNotes();
+    this.unsubscribeNotes = this.connectUserNotes();
+  }
+
   private connectUserNotes () {
-    const notesRef = firebase.firestore().collection('redux-todo-notes');
+    if (!this.state.currentUser.loggedIn) {
+      return noop;
+    }
+
+    const notesRef = firebase.firestore().collection('redux-todo-notes')
+      .where('userId', '==', this.state.currentUser.id);
     const done = this.setWorking('init notes ref');
     const unsubscribeNotes = notesRef.onSnapshot({
       error: (error) => this.addError(error),

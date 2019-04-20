@@ -37,6 +37,12 @@ interface IWorkingTask {
 }
 
 interface IHomePageState {
+  currentUser: {
+    id: string;
+    loggedIn: boolean;
+    name: string;
+    ready: boolean;
+  };
   editingNote: Notes.INote;
   errors: string[];
   userNotes: Notes.INote[];
@@ -45,6 +51,7 @@ interface IHomePageState {
 }
 
 export class HomePage extends React.Component<any, IHomePageState> {
+  protected unsubscribeAuth = noop;
   protected unsubscribeNotes = noop;
 
   constructor (props: any) {
@@ -54,6 +61,12 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.onNoteEdit = this.onNoteEdit.bind(this);
     this.onNoteDelete = this.onNoteDelete.bind(this);
     this.state = {
+      currentUser: {
+        id: '',
+        loggedIn: false,
+        name: '',
+        ready: false,
+      },
       editingNote: Notes.createEmptyNote(),
       errors: [],
       userNotes: [],
@@ -63,6 +76,12 @@ export class HomePage extends React.Component<any, IHomePageState> {
   }
 
   public render () {
+    if (!this.state.currentUser.ready) {
+      return (
+        <div>…</div>
+      );
+    }
+
     return (
       <div>
         <h1>
@@ -75,6 +94,19 @@ export class HomePage extends React.Component<any, IHomePageState> {
               <p>{message}</p>
             ))}
           </div>
+        )}
+        <h2>User</h2>
+        {this.state.currentUser.loggedIn ? (
+          <>
+            <p>Welcome {this.state.currentUser.name}!</p>
+            <p>
+              <button disabled>Log out</button>
+            </p>
+          </>
+        ) : (
+          <p>
+            <button disabled>Log in</button>
+          </p>
         )}
         <h2>New note</h2>
         <NoteForm
@@ -96,10 +128,12 @@ export class HomePage extends React.Component<any, IHomePageState> {
   }
 
   public componentDidMount () {
+    this.unsubscribeAuth = this.connectAuth();
     this.unsubscribeNotes = this.connectUserNotes();
   }
 
   public componentWillUnmount () {
+    this.unsubscribeAuth();
     this.unsubscribeNotes();
   }
 
@@ -132,6 +166,37 @@ export class HomePage extends React.Component<any, IHomePageState> {
       await notesRef.doc(note.id).delete();
       done();
     }
+  }
+
+  private connectAuth () {
+    const done = this.setWorking('init auth');
+    const unsubscribeAuth = firebase.auth().onAuthStateChanged({
+      complete: noop,
+      error: (error) => this.addError(error),
+      next: (user: firebase.User | null) => {
+        done();
+        if (user) {
+          this.setState({
+            currentUser: {
+              id: user.uid,
+              loggedIn: true,
+              name: user.displayName || '',
+              ready: true,
+            },
+          });
+        } else {
+          this.setState({
+            currentUser: {
+              id: '',
+              loggedIn: false,
+              name: '',
+              ready: true,
+            },
+          });
+        }
+      },
+    });
+    return unsubscribeAuth;
   }
 
   private connectUserNotes () {

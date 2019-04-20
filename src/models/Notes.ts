@@ -34,6 +34,7 @@ export function connectUserNotes (
   onEach: () => void = noop,
 ): () => void {
   if (!userId) {
+    onEach();
     return noop;
   }
 

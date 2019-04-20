@@ -28,7 +28,10 @@ export function set (user: firebase.User | null): ISetCurrentUserAction {
 
 function setCurrentUser (user: firebase.User | null): ICurrentUserState {
   if (!user) {
-    return initialState;
+    return {
+      ...initialState,
+      ready: true,
+    };
   }
 
   return {

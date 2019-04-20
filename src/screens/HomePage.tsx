@@ -64,6 +64,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.onLogOutClick = this.onLogOutClick.bind(this);
     this.onNewNoteChange = this.onNewNoteChange.bind(this);
     this.onNewNoteSubmit = this.onNewNoteSubmit.bind(this);
+    this.onNewNoteCancel = this.onNewNoteCancel.bind(this);
     this.onNoteEdit = this.onNoteEdit.bind(this);
     this.onNoteDelete = this.onNoteDelete.bind(this);
     this.state = {
@@ -115,6 +116,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
             <h2>New note</h2>
             <NoteForm
               note={this.state.editingNote}
+              onCancel={this.onNewNoteCancel}
               onChange={this.onNewNoteChange}
               onSubmit={this.onNewNoteSubmit}
             />
@@ -183,6 +185,10 @@ export class HomePage extends React.Component<any, IHomePageState> {
       await notesRef.add(note);
     }
     done();
+  }
+
+  public onNewNoteCancel (note: Notes.INote) {
+    this.setState({ editingNote: Notes.createEmptyNote() });
   }
 
   public async onNoteEdit (note: Notes.INote) {

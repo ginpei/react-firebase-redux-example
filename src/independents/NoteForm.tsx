@@ -3,6 +3,7 @@ import * as Notes from '../models/Notes';
 
 interface INoteFormProps {
   note: Notes.INote;
+  onCancel: (note: Notes.INote) => void;
   onChange: (note: Notes.INote) => void;
   onSubmit: (note: Notes.INote) => void;
 }
@@ -16,6 +17,7 @@ export class NoteForm extends React.PureComponent<INoteFormProps, INoteFormState
     super(props);
     this.onSubmit = this.onSubmit.bind(this);
     this.onBodyChange = this.onBodyChange.bind(this);
+    this.onCancelClick = this.onCancelClick.bind(this);
   }
 
   public render () {
@@ -28,6 +30,12 @@ export class NoteForm extends React.PureComponent<INoteFormProps, INoteFormState
           value={this.props.note.body}
         />
         <button>{this.props.note.id ? 'Update' : 'Add'}</button>
+        <button
+          onClick={this.onCancelClick}
+          type="button"
+        >
+          Cancel
+        </button>
       </form>
     );
   }
@@ -47,5 +55,9 @@ export class NoteForm extends React.PureComponent<INoteFormProps, INoteFormState
       ...this.props.note,
       body,
     });
+  }
+
+  public onCancelClick () {
+    this.props.onCancel(this.props.note);
   }
 }

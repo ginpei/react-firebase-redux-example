@@ -1,9 +1,9 @@
 import React from 'react';
 import { NoteForm } from '../independents/NoteForm';
 import firebase from '../middleware/firebase';
+import { noop } from '../misc';
 import * as Notes from '../models/Notes';
-
-const noop: () => void = () => undefined;
+import WorkManager from '../WorkManager';
 
 interface INoteProps {
   note: Notes.INote;
@@ -35,11 +35,6 @@ function Note (props: INoteProps) {
   );
 }
 
-interface IWorkingTask {
-  date: number;
-  title: string;
-}
-
 interface IHomePageState {
   currentUser: {
     id: string;
@@ -51,12 +46,12 @@ interface IHomePageState {
   errors: string[];
   userNotes: Notes.INote[];
   working: boolean;
-  workingTasks: IWorkingTask[];
 }
 
 export class HomePage extends React.Component<any, IHomePageState> {
   protected unsubscribeAuth = noop;
   protected unsubscribeNotes = noop;
+  protected workManager = new WorkManager();
 
   constructor (props: any) {
     super(props);
@@ -78,8 +73,10 @@ export class HomePage extends React.Component<any, IHomePageState> {
       errors: [],
       userNotes: [],
       working: false,
-      workingTasks: [],
     };
+
+    this.workManager.onWork = (working) => this.setState({ working });
+    this.workManager.onError = (error) => this.addError(error);
   }
 
   public render () {
@@ -155,14 +152,14 @@ export class HomePage extends React.Component<any, IHomePageState> {
   public async onLogInClick () {
     const email = 'test@google.com';
     const password = '123456';
-    this.work('log in', () => {
+    this.workManager.run('log in', () => {
       const p = firebase.auth().signInWithEmailAndPassword(email, password);
       return p;
     });
   }
 
   public async onLogOutClick () {
-    this.work('log out', () => firebase.auth().signOut());
+    this.workManager.run('log out', () => firebase.auth().signOut());
   }
 
   public onNewNoteChange (note: Notes.INote) {
@@ -178,7 +175,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.setState({ editingNote: Notes.createEmptyNote() });
 
     const notesRef = firebase.firestore().collection('redux-todo-notes');
-    const done = this.setWorking('add note');
+    const done = this.workManager.start('add note');
     if (note.id) {
       await notesRef.doc(note.id).set(note);
     } else {
@@ -199,14 +196,14 @@ export class HomePage extends React.Component<any, IHomePageState> {
     const ok = window.confirm('Are you sure you want to delete this?');
     if (ok) {
       const notesRef = firebase.firestore().collection('redux-todo-notes');
-      const done = this.setWorking('delete note');
+      const done = this.workManager.start('delete note');
       await notesRef.doc(note.id).delete();
       done();
     }
   }
 
   private connectAuth () {
-    const done = this.setWorking('init auth');
+    const done = this.workManager.start('init auth');
     const unsubscribeAuth = firebase.auth().onAuthStateChanged({
       complete: noop,
       error: (error) => this.addError(error),
@@ -250,7 +247,7 @@ export class HomePage extends React.Component<any, IHomePageState> {
 
     const notesRef = firebase.firestore().collection('redux-todo-notes')
       .where('userId', '==', this.state.currentUser.id);
-    const done = this.setWorking('init notes ref');
+    const done = this.workManager.start('init notes ref');
     const unsubscribeNotes = notesRef.onSnapshot({
       error: (error) => this.addError(error),
       next: (snapshot) => {
@@ -268,50 +265,5 @@ export class HomePage extends React.Component<any, IHomePageState> {
     const errors = [...this.state.errors];
     errors.push(error.message);
     this.setState({ errors });
-  }
-
-  private async work<T> (title: string, fn: () => Promise<T>): Promise<T | null> {
-    const done = this.setWorking(title);
-    try {
-      const result = await fn();
-      return result;
-    } catch (error) {
-      this.addError(error);
-      return null;
-    } finally {
-      done();
-    }
-  }
-
-  private setWorking (title = '') {
-    const newTasks = [...this.state.workingTasks];
-    const task: IWorkingTask = {
-      date: Date.now(),
-      title,
-    };
-    newTasks.push(task);
-    this.setState({
-      working: true,
-      workingTasks: newTasks,
-    });
-
-    return () => {
-      const { workingTasks } = this.state;
-      const index = workingTasks.indexOf(task);
-
-      // do nothing if closed
-      if (index < 0) {
-        return;
-      }
-
-      const finalTasks = [...workingTasks];
-      finalTasks.splice(index, 1);
-
-      const working = finalTasks.length > 0;
-      this.setState({
-        working,
-        workingTasks: finalTasks,
-      });
-    };
   }
 }

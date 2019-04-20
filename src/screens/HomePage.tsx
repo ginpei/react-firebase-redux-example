@@ -235,14 +235,9 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   }
 
   private connectUserNotes () {
-    if (!this.props.currentUser.loggedIn) {
-      return noop;
-    }
-
-    const notesRef = firebase.firestore().collection('redux-todo-notes')
-      .where('userId', '==', this.props.currentUser.id);
     const done = this.workManager.start('init notes ref');
-    const unsubscribeNotes = notesRef.onSnapshot(
+    const unsubscribeNotes = Notes.connectUserNotes(
+      this.props.currentUser.id,
       (snapshot) => this.setState({
         userNotes: snapshot.docs.map((v) => Notes.snapshotToRecord(v)),
       }),

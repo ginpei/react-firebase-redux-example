@@ -1,8 +1,10 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { NoteForm } from '../independents/NoteForm';
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 import * as Notes from '../models/Notes';
+import { AppDispatch, IAppState } from '../models/store';
 import WorkManager from '../WorkManager';
 
 interface INoteProps {
@@ -35,6 +37,11 @@ function Note (props: INoteProps) {
   );
 }
 
+interface IHomePageProps {
+  dispatch: AppDispatch;
+  foo: string;
+}
+
 interface IHomePageState {
   currentUser: {
     id: string;
@@ -48,13 +55,14 @@ interface IHomePageState {
   working: boolean;
 }
 
-export class HomePage extends React.Component<any, IHomePageState> {
+export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   protected unsubscribeAuth = noop;
   protected unsubscribeNotes = noop;
   protected workManager = new WorkManager();
 
   constructor (props: any) {
     super(props);
+    this.onFooClick = this.onFooClick.bind(this);
     this.onLogInClick = this.onLogInClick.bind(this);
     this.onLogOutClick = this.onLogOutClick.bind(this);
     this.onNewNoteChange = this.onNewNoteChange.bind(this);
@@ -90,8 +98,16 @@ export class HomePage extends React.Component<any, IHomePageState> {
       <div>
         <h1>
           Home
+          [{this.props.foo}]
           {this.state.working && '!'}
         </h1>
+        <p>
+          <button
+            onClick={this.onFooClick}
+          >
+            Foo
+          </button>
+        </p>
         {this.state.errors.length > 0 && (
           <div>
             {this.state.errors.map((message) => (
@@ -147,6 +163,14 @@ export class HomePage extends React.Component<any, IHomePageState> {
   public componentWillUnmount () {
     this.unsubscribeAuth();
     this.unsubscribeNotes();
+  }
+
+  public onFooClick () {
+    if (this.props.foo === 'bar') {
+      this.props.dispatch({ type: 'FOO_BOO' });
+    } else {
+      this.props.dispatch({ type: 'FOO_BAR' });
+    }
   }
 
   public onLogInClick () {
@@ -261,3 +285,9 @@ export class HomePage extends React.Component<any, IHomePageState> {
     this.setState({ errors });
   }
 }
+
+export default connect(
+  (state: IAppState) => ({
+    foo: state.foo,
+  }),
+)(HomePage);

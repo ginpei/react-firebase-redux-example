@@ -1,10 +1,18 @@
 import React, { Component } from 'react';
-import { HomePage } from './screens/HomePage';
+import { Provider } from 'react-redux';
+import { createAppStore } from './models/store';
+import HomePage from './screens/HomePage';
 
 class App extends Component {
+  protected store = createAppStore();
+
   public render () {
     return (
-      <HomePage/>
+      <Provider
+        store={this.store}
+      >
+        <HomePage/>
+      </Provider>
     );
   }
 }

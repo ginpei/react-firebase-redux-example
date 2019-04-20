@@ -222,14 +222,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
 
   private connectAuth () {
     const done = this.workManager.start('init auth');
-    const unsubscribeAuth = firebase.auth().onAuthStateChanged({
-      complete: noop,
-      error: (error) => this.addError(error),
-      next: (user: firebase.User | null) => {
-        done();
-        this.onAuth(user);
-      },
-    });
+    const unsubscribeAuth = firebase.auth().onAuthStateChanged(
+      (user) => this.onAuth(user),
+      (error) => this.addError(error),
+      () => done(),
+    );
     return unsubscribeAuth;
   }
 
@@ -277,7 +274,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     return unsubscribeNotes;
   }
 
-  private addError (error: Error) {
+  private addError (error: Error | firebase.auth.Error) {
     console.error(error);
 
     const errors = [...this.state.errors];

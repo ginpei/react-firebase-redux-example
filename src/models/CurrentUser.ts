@@ -1,3 +1,6 @@
+import firebase from '../middleware/firebase';
+import { noop } from '../misc';
+
 export interface ICurrentUserState {
   id: string;
   loggedIn: boolean;
@@ -49,4 +52,24 @@ export function reduceCurrentUser (
     default:
       return state;
   }
+}
+
+// (method) firebase.auth.Auth.onAuthStateChanged(): firebase.Unsubscribe
+
+export function connectAuth (
+  nextOrObserver: (user: firebase.User | null) => void,
+  onError: (error: firebase.auth.Error) => any = noop,
+  onEach: firebase.Unsubscribe = noop,
+): firebase.Unsubscribe {
+  const unsubscribeAuth = firebase.auth().onAuthStateChanged(
+    (user) => {
+      nextOrObserver(user);
+      onEach();
+    },
+    (error) => {
+      onError(error);
+      onEach();
+    },
+  );
+  return unsubscribeAuth;
 }

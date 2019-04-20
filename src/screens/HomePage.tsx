@@ -220,15 +220,10 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
 
   private connectAuth () {
     const done = this.workManager.start('init auth');
-    const unsubscribeAuth = firebase.auth().onAuthStateChanged(
-      (user) => {
-        this.onAuth(user);
-        done();
-      },
-      (error) => {
-        this.props.addError(error);
-        done();
-      },
+    const unsubscribeAuth = CurrentUser.connectAuth(
+      (user) => this.onAuth(user),
+      (error) => this.props.addError(error),
+      () => done(),
     );
     return unsubscribeAuth;
   }
@@ -243,16 +238,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     const done = this.workManager.start('init notes ref');
     const unsubscribeNotes = Notes.connectUserNotes(
       this.props.currentUser.id,
-      (snapshot) => {
-        this.setState({
-          userNotes: snapshot.docs.map((v) => Notes.snapshotToRecord(v)),
-        });
-        done();
-      },
-      (error) => {
-        this.props.addError(error);
-        done();
-      },
+      (snapshot) => this.setState({
+        userNotes: snapshot.docs.map((v) => Notes.snapshotToRecord(v)),
+      }),
+      (error) => this.props.addError(error),
+      () => done(),
     );
     return unsubscribeNotes;
   }

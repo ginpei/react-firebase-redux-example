@@ -30,8 +30,8 @@ export function snapshotToRecord (snapshot: firebase.firestore.QueryDocumentSnap
 export function connectUserNotes (
   userId: string,
   onNext: (snapshot: firebase.firestore.QuerySnapshot) => void,
-  onError?: ((error: Error) => void) | undefined,
-  onCompletion?: (() => void) | undefined,
+  onError: (error: Error) => void = noop,
+  onEach: () => void = noop,
 ): () => void {
   if (!userId) {
     return noop;
@@ -39,6 +39,15 @@ export function connectUserNotes (
 
   const notesRef = firebase.firestore().collection('redux-todo-notes')
     .where('userId', '==', userId);
-  const unsubscribeNotes = notesRef.onSnapshot(onNext, onError, onCompletion);
+  const unsubscribeNotes = notesRef.onSnapshot(
+    (snapshot) => {
+      onNext(snapshot);
+      onEach();
+    },
+    (error) => {
+      onError(error);
+      onEach();
+    },
+  );
   return unsubscribeNotes;
 }

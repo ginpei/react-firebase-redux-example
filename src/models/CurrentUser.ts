@@ -1,5 +1,6 @@
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
+import { IProfile } from './Profiles';
 
 export interface ICurrentUserState {
   id: string;
@@ -37,13 +38,26 @@ function setCurrentUser (user: firebase.User | null): ICurrentUserState {
   return {
     id: user.uid,
     loggedIn: true,
-    name: user.displayName || '',
+    name: '',
     ready: true,
   };
 }
 
+interface ISetCurrentUserProfileAction {
+  profile: IProfile;
+  type: 'CURRENT_USER_SET_PROFILE';
+}
+
+export function setProfile (profile: IProfile): ISetCurrentUserProfileAction {
+  return {
+    profile,
+    type: 'CURRENT_USER_SET_PROFILE',
+  };
+}
+
 export type CurrentUserAction =
-  | ISetCurrentUserAction;
+  | ISetCurrentUserAction
+  | ISetCurrentUserProfileAction;
 
 export function reduceCurrentUser (
   state = initialState,
@@ -52,6 +66,11 @@ export function reduceCurrentUser (
   switch (action.type) {
     case 'CURRENT_USER_SET':
       return setCurrentUser(action.user);
+    case 'CURRENT_USER_SET_PROFILE':
+      return {
+        ...state,
+        name: action.profile.name,
+      };
     default:
       return state;
   }

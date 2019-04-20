@@ -6,6 +6,7 @@ import { noop } from '../misc';
 import * as CurrentUser from '../models/CurrentUser';
 import * as Errors from '../models/Errors';
 import * as Notes from '../models/Notes';
+import * as Profiles from '../models/Profiles';
 import { AppDispatch, IAppState } from '../models/store';
 import WorkManager from '../WorkManager';
 
@@ -45,6 +46,7 @@ interface IHomePageProps {
   currentUser: CurrentUser.ICurrentUserState;
   errors: Errors.IErrorLog[];
   setCurrentUser: (user: firebase.User | null) => void;
+  setProfile: (profile: Profiles.IProfile) => void;
 }
 
 interface IHomePageState {
@@ -55,6 +57,7 @@ interface IHomePageState {
 
 export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   protected unsubscribeAuth = noop;
+  protected unsubscribeProfile = noop;
   protected unsubscribeNotes = noop;
   protected workManager = new WorkManager();
 
@@ -230,8 +233,23 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
 
   private onAuth (user: firebase.User | null) {
     this.props.setCurrentUser(user);
+    this.connectUser();
     this.unsubscribeNotes();
     this.unsubscribeNotes = this.connectUserNotes();
+  }
+
+  private connectUser () {
+    this.unsubscribeProfile();
+
+    const done = this.workManager.start('init profile ref');
+    this.unsubscribeProfile = Profiles.connectProfile(
+      this.props.currentUser.id,
+      (snapshot) => this.props.setProfile(
+        Profiles.snapshotToProfile(snapshot),
+      ),
+      (error) => this.props.addError(error),
+      () => done(),
+    );
   }
 
   private connectUserNotes () {
@@ -257,5 +275,6 @@ export default connect(
     addError: (error: Errors.AnyError) => dispatch(Errors.add(error)),
     clearError: () => dispatch(Errors.clear()),
     setCurrentUser: (user: firebase.User | null) => dispatch(CurrentUser.set(user)),
+    setProfile: (profile: Profiles.IProfile) => dispatch(CurrentUser.setProfile(profile)),
   }),
 )(HomePage);

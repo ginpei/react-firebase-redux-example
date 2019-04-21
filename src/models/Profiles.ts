@@ -1,7 +1,7 @@
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 
-const collectionName = 'users';
+const collectionName = 'profiles';
 
 export interface IProfile {
   id: string;

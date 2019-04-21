@@ -52,3 +52,20 @@ export function connectUserNotes (
   );
   return unsubscribeNotes;
 }
+
+export function save (
+  note: INote,
+): Promise<firebase.firestore.DocumentData | void> {
+  const notesRef = firebase.firestore().collection('redux-todo-notes');
+
+  if (note.id) {
+    return notesRef.doc(note.id).set(note);
+  }
+
+  return notesRef.add(note);
+}
+
+export function remove (note: INote) {
+  const notesRef = firebase.firestore().collection('redux-todo-notes');
+  return notesRef.doc(note.id).delete();
+}

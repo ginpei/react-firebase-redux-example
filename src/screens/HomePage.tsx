@@ -2,8 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { NoteForm } from '../independents/NoteForm';
 import UserProfileForm from '../independents/UserProfileForm';
-import firebase from '../middleware/firebase';
 import { noop } from '../misc';
+import * as Auth from '../models/Auth';
 import * as CurrentUser from '../models/CurrentUser';
 import * as Errors from '../models/Errors';
 import * as Notes from '../models/Notes';
@@ -189,12 +189,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   public onLogInClick () {
     const email = 'test@google.com';
     const password = '123456';
-    const p = firebase.auth().signInWithEmailAndPassword(email, password);
-    this.workManager.run('log in', p);
+    this.workManager.run('log in', Auth.signInWithEmail(email, password));
   }
 
   public onLogOutClick () {
-    this.workManager.run('log out', firebase.auth().signOut());
+    this.workManager.run('log out', Auth.signOut());
   }
 
   public onNewNoteChange (note: Notes.INote) {
@@ -208,13 +207,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     note.userId = this.props.currentUser.id;
 
     this.setState({ editingNote: Notes.createEmptyNote() });
-
-    const notesRef = firebase.firestore().collection('redux-todo-notes');
-    if (note.id) {
-      this.workManager.run('update note', notesRef.doc(note.id).set(note));
-    } else {
-      this.workManager.run('add note', notesRef.add(note));
-    }
+    this.workManager.run('save note', Notes.save(note));
   }
 
   public onProfileChange (profile: Profiles.IProfile) {
@@ -236,8 +229,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
   public onNoteDelete (note: Notes.INote) {
     const ok = window.confirm('Are you sure you want to delete this?');
     if (ok) {
-      const notesRef = firebase.firestore().collection('redux-todo-notes');
-      this.workManager.run('delete note', notesRef.doc(note.id).delete());
+      this.workManager.run('delete note', Notes.remove(note));
     }
   }
 

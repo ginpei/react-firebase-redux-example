@@ -1,5 +1,5 @@
 {
-  "name": "firebase-redux-todo",
+  "name": "react-firebase-redux",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

@@ -1,7 +1,7 @@
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 
-const collectionName = 'redux-todo-notes';
+const collectionName = 'notes';
 
 export interface INote {
   body: string;

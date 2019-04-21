@@ -270,9 +270,10 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     const done = this.workManager.start('init notes ref');
     const unsubscribeNotes = Notes.connectUserNotes(
       this.props.currentUser.id,
-      (snapshot) => this.setState({
-        userNotes: snapshot.docs.map((v) => Notes.snapshotToRecord(v)),
-      }),
+      (snapshot) => {
+        const userNotes = snapshot.docs.map((v) => Notes.snapshotToRecord(v));
+        this.setState({ userNotes });
+      },
       (error) => this.props.addError(error),
       () => done(),
     );

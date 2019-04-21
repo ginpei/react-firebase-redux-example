@@ -147,6 +147,9 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
               onSubmit={this.onNewNoteSubmit}
             />
             <h2>Notes</h2>
+            {this.state.userNotes.length < 1 && (
+              <p>(No notes found.)</p>
+            )}
             {this.state.userNotes.map((note) => (
               <Note
                 key={note.id}

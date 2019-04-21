@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { NoteForm } from '../independents/NoteForm';
+import UserProfileForm from '../independents/UserProfileForm';
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 import * as CurrentUser from '../models/CurrentUser';
@@ -51,6 +52,8 @@ interface IHomePageProps {
 
 interface IHomePageState {
   editingNote: Notes.INote;
+  editingProfile: Profiles.IProfile;
+  profile: Profiles.IProfile;
   userNotes: Notes.INote[];
   working: boolean;
 }
@@ -67,6 +70,8 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     this.onClearErrorClick = this.onClearErrorClick.bind(this);
     this.onLogInClick = this.onLogInClick.bind(this);
     this.onLogOutClick = this.onLogOutClick.bind(this);
+    this.onProfileChange = this.onProfileChange.bind(this);
+    this.onProfileSubmit = this.onProfileSubmit.bind(this);
     this.onNewNoteChange = this.onNewNoteChange.bind(this);
     this.onNewNoteSubmit = this.onNewNoteSubmit.bind(this);
     this.onNewNoteCancel = this.onNewNoteCancel.bind(this);
@@ -74,6 +79,8 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     this.onNoteDelete = this.onNoteDelete.bind(this);
     this.state = {
       editingNote: Notes.createEmptyNote(),
+      editingProfile: Profiles.emptyProfile,
+      profile: Profiles.emptyProfile,
       userNotes: [],
       working: false,
     };
@@ -127,6 +134,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
                 Log out
               </button>
             </p>
+            <UserProfileForm
+              profile={this.state.editingProfile}
+              onChange={this.onProfileChange}
+              onSubmit={this.onProfileSubmit}
+            />
             <h2>New note</h2>
             <NoteForm
               note={this.state.editingNote}
@@ -205,6 +217,14 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     }
   }
 
+  public onProfileChange (profile: Profiles.IProfile) {
+    this.setState({ editingProfile: profile });
+  }
+
+  public onProfileSubmit (profile: Profiles.IProfile) {
+    this.workManager.run('save profile', Profiles.saveProfile(profile));
+  }
+
   public onNewNoteCancel (note: Notes.INote) {
     this.setState({ editingNote: Notes.createEmptyNote() });
   }
@@ -244,9 +264,11 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     const done = this.workManager.start('init profile ref');
     this.unsubscribeProfile = Profiles.connectProfile(
       this.props.currentUser.id,
-      (snapshot) => this.props.setProfile(
-        Profiles.snapshotToProfile(snapshot),
-      ),
+      (snapshot) => {
+        const profile = Profiles.snapshotToProfile(snapshot);
+        this.props.setProfile(profile);
+        this.setState({ editingProfile: profile, profile });
+      },
       (error) => this.props.addError(error),
       () => done(),
     );

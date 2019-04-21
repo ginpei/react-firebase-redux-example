@@ -7,6 +7,21 @@ export interface IProfile {
   name: string;
 }
 
+export const emptyProfile: Readonly<IProfile> = Object.freeze({
+  id: '',
+  message: '',
+  name: '',
+});
+
+export function saveProfile (profile: IProfile) {
+  const userId = profile.id;
+  if (!userId) {
+    throw new Error('Profile must have user ID');
+  }
+  const profileRef = firebase.firestore().collection('users').doc(userId);
+  return profileRef.set(profile);
+}
+
 export function connectProfile (
   userId: string,
   onNext: (snapshot: firebase.firestore.DocumentSnapshot) => void,

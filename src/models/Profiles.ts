@@ -1,6 +1,8 @@
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 
+const collectionName = 'users';
+
 export interface IProfile {
   id: string;
   message: string;
@@ -18,7 +20,7 @@ export function saveProfile (profile: IProfile) {
   if (!userId) {
     throw new Error('Profile must have user ID');
   }
-  const profileRef = firebase.firestore().collection('users').doc(userId);
+  const profileRef = firebase.firestore().collection(collectionName).doc(userId);
   return profileRef.set(profile);
 }
 
@@ -33,7 +35,7 @@ export function connectProfile (
     return noop;
   }
 
-  const userRef = firebase.firestore().collection('users').doc(userId);
+  const userRef = firebase.firestore().collection(collectionName).doc(userId);
   const unsubscribeNotes = userRef.onSnapshot(
     (snapshot) => {
       onNext(snapshot);

@@ -1,6 +1,8 @@
 import firebase from '../middleware/firebase';
 import { noop } from '../misc';
 
+const collectionName = 'redux-todo-notes';
+
 export interface INote {
   body: string;
   id: string;
@@ -38,7 +40,7 @@ export function connectUserNotes (
     return noop;
   }
 
-  const notesRef = firebase.firestore().collection('redux-todo-notes')
+  const notesRef = firebase.firestore().collection(collectionName)
     .where('userId', '==', userId);
   const unsubscribeNotes = notesRef.onSnapshot(
     (snapshot) => {
@@ -56,7 +58,7 @@ export function connectUserNotes (
 export function save (
   note: INote,
 ): Promise<firebase.firestore.DocumentData | void> {
-  const notesRef = firebase.firestore().collection('redux-todo-notes');
+  const notesRef = firebase.firestore().collection(collectionName);
 
   if (note.id) {
     return notesRef.doc(note.id).set(note);
@@ -66,6 +68,6 @@ export function save (
 }
 
 export function remove (note: INote) {
-  const notesRef = firebase.firestore().collection('redux-todo-notes');
+  const notesRef = firebase.firestore().collection(collectionName);
   return notesRef.doc(note.id).delete();
 }

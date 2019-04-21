@@ -17,13 +17,13 @@ export function createEmptyNote (): INote {
   };
 }
 
-export function snapshotToRecord (
+export function snapshotToNote (
   snapshot: firebase.firestore.QueryDocumentSnapshot,
 ): INote;
-export function snapshotToRecord (
+export function snapshotToNote (
   snapshot: firebase.firestore.DocumentSnapshot,
 ): INote | null;
-export function snapshotToRecord (
+export function snapshotToNote (
   snapshot: firebase.firestore.DocumentSnapshot,
 ): INote | null {
   const data = snapshot.data();

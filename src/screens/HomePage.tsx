@@ -277,7 +277,7 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     const unsubscribeNotes = Notes.connectUserNotes(
       this.props.currentUser.id,
       (snapshot) => {
-        const userNotes = snapshot.docs.map((v) => Notes.snapshotToRecord(v));
+        const userNotes = snapshot.docs.map((v) => Notes.snapshotToNote(v));
         this.setState({ userNotes });
       },
       (error) => this.props.addError(error),

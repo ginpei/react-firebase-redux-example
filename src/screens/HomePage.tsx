@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { NoteForm } from '../independents/NoteForm';
+import NoteForm from '../independents/NoteForm';
 import UserProfileForm from '../independents/UserProfileForm';
 import { noop } from '../misc';
 import * as Auth from '../models/Auth';

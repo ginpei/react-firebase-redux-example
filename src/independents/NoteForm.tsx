@@ -12,7 +12,7 @@ interface INoteFormState {
   body: string;
 }
 
-export class NoteForm extends React.PureComponent<INoteFormProps, INoteFormState> {
+export default class NoteForm extends React.PureComponent<INoteFormProps, INoteFormState> {
   constructor (props: Readonly<INoteFormProps>) {
     super(props);
     this.onSubmit = this.onSubmit.bind(this);

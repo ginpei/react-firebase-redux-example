@@ -29,6 +29,7 @@ export function connectProfile (
   onEach: () => void = noop,
 ): () => void {
   if (!userId) {
+    onEach();
     return noop;
   }
 

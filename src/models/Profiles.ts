@@ -24,6 +24,14 @@ export function saveProfile (profile: IProfile) {
   return profileRef.set(profile);
 }
 
+export function getDefaultProfile (userId: string): IProfile {
+  return {
+    ...emptyProfile,
+    id: userId,
+    name: 'No name',
+  };
+}
+
 export function connectProfile (
   userId: string,
   onNext: (snapshot: firebase.firestore.DocumentSnapshot) => void,
@@ -51,8 +59,12 @@ export function connectProfile (
 
 export function snapshotToProfile (
   snapshot: firebase.firestore.DocumentSnapshot,
-): IProfile {
-  const data = snapshot.data() || {};
+): IProfile | null {
+  const data = snapshot.data();
+  if (!data) {
+    return null;
+  }
+
   return {
     id: data.id || '',
     message: data.message || '',

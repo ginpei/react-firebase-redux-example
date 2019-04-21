@@ -52,7 +52,7 @@ export function connectProfile (
 export function snapshotToProfile (
   snapshot: firebase.firestore.DocumentSnapshot,
 ): IProfile {
-  const data = snapshot.data()!;
+  const data = snapshot.data() || {};
   return {
     id: data.id || '',
     message: data.message || '',

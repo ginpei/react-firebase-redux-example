@@ -257,10 +257,15 @@ export class HomePage extends React.Component<IHomePageProps, IHomePageState> {
     this.unsubscribeProfile();
 
     const done = this.workManager.start('init profile ref');
+    const userId = this.props.currentUser.id;
     this.unsubscribeProfile = Profiles.connectProfile(
-      this.props.currentUser.id,
+      userId,
       (snapshot) => {
         const profile = Profiles.snapshotToProfile(snapshot);
+        if (!profile.id) {
+          profile.id = userId;
+          profile.name = 'No name';
+        }
         this.props.setProfile(profile);
         this.setState({ editingProfile: profile, profile });
       },
